@@ -5,14 +5,24 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
+import com.jakewharton.rxbinding.view.RxView;
+import com.jakewharton.rxbinding.view.ViewClickEvent;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import butterknife.OnClick;
 import rx.Observable;
+import rx.Observer;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
@@ -20,6 +30,12 @@ public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getName();
     private Subscription mSubscription = null;
+    private Subscription mBufferingSubscription = null;
+
+
+    @InjectView(R.id.btn_buffering)
+    protected Button inputBuffering;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +43,11 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         Timber.d(TAG + " %s ", "inside onCreate()");
         ButterKnife.inject(this);
+
+
+        mBufferingSubscription = inputBuffering();
+
+
     }
 
 
@@ -60,8 +81,45 @@ public class MainActivity extends Activity {
         createCustomObservable();
     }
 
-    @OnClick(R.id.btn_buffering)
-    public void inputBuffering(View view){
+
+    public Subscription inputBuffering(){
+
+        return RxView.clickEvents(inputBuffering)
+                .map(new Func1<ViewClickEvent, Integer>() {
+                    @Override
+                    public Integer call(ViewClickEvent onClickEvent) {
+                        Timber.d("--------- GOT A TAP");
+                        Timber.d("GOT A TAP");
+                        return 1;
+                    }
+                })
+                .buffer(2, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<Integer>>() {
+
+                    @Override
+                    public void onCompleted() {
+                        // fyi: you'll never reach here
+                        Timber.d("----- onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e, "--------- Woops on error!");
+
+                    }
+
+                    @Override
+                    public void onNext(List<Integer> integers) {
+                        Timber.d("--------- onNext");
+                        if (integers.size() > 0) {
+                            Timber.d(String.format("%d taps", integers.size()));
+                        } else {
+                            Timber.d("--------- No taps received ");
+                        }
+                    }
+                });
+
 
     }
 
@@ -131,6 +189,11 @@ public class MainActivity extends Activity {
         if(mSubscription != null && !mSubscription.isUnsubscribed()){
             mSubscription.unsubscribe();
         }
+
+        if(mBufferingSubscription != null && !mBufferingSubscription.isUnsubscribed()){
+            mBufferingSubscription.unsubscribe();
+        }
+
     }
 
 }
