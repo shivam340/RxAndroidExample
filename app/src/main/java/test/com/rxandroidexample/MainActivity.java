@@ -129,6 +129,10 @@ public class MainActivity extends Activity {
         Toast.makeText(getApplicationContext(), "clicked", Toast.LENGTH_SHORT).show();
         Timber.d(TAG + " %s ", "doing some heavy task here. ");
 
+
+        //OnSubscribe is interface and has method call , when we call subscribe on observable
+        // this method (call) gets invoked.
+
         Observable<Integer> observable = Observable.create(new Observable.OnSubscribe<Integer>() {
             @Override
             public void call(Subscriber<? super Integer> observer) {
