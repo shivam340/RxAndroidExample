@@ -326,10 +326,56 @@ public class MainActivity extends Activity {
     }
 
 
-
     @OnClick(R.id.btn_combine_latest)
-    protected void combineLatest(){
+    protected void combineLatest() {
         startActivity(new Intent(MainActivity.this, LoginActivity.class));
+    }
+
+
+    @OnClick(R.id.btn_just)
+    protected void just() {
+
+        Observable<Boolean> observable = Observable.just(true);
+        observable.map(new Func1<Boolean, Boolean>() {
+                           @Override
+                           public Boolean call(Boolean aBoolean) {
+                               performHeavyTask();
+                               return true;
+                           }
+                       }
+        );
+
+        observable.repeat(3);
+        observable.subscribeOn(Schedulers.io());
+        observable.observeOn(AndroidSchedulers.mainThread());
+        observable.subscribe(new Observer<Boolean>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(Boolean aBoolean) {
+
+            }
+        });
+    }
+
+
+    private void performHeavyTask() {
+
+        Timber.d(TAG + " %s ", "performing long running operation.");
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
     }
 
 
