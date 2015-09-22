@@ -32,14 +32,18 @@ public class MainActivity extends Activity {
     private Subscription mSubscription = null;
     private Subscription mBufferingSubscription = null;
     private Subscription mBufferingMapSubscription = null;
+    private Subscription mBufferingFlatMapSubscription = null;
 
 
     @InjectView(R.id.btn_buffering)
     protected Button inputBuffering;
 
-
     @InjectView(R.id.btn_buffering_map)
     protected Button inputBufferingMap;
+
+    @InjectView(R.id.btn_buffering_flat_map)
+    protected Button inputBufferingFlatap;
+
 
 
     @Override
@@ -51,6 +55,7 @@ public class MainActivity extends Activity {
 
         mBufferingSubscription = inputBuffering();
         mBufferingMapSubscription = inputBufferingWithMap();
+        mBufferingFlatMapSubscription = inputBufferingWithFlatMap();
 
     }
 
@@ -202,8 +207,21 @@ public class MainActivity extends Activity {
             mBufferingSubscription.unsubscribe();
         }
 
+
+        if (mBufferingMapSubscription != null && !mBufferingMapSubscription.isUnsubscribed()) {
+            mBufferingMapSubscription.unsubscribe();
+        }
+
+        if (mBufferingFlatMapSubscription != null && !mBufferingFlatMapSubscription.isUnsubscribed()) {
+            mBufferingFlatMapSubscription.unsubscribe();
+        }
+
     }
 
+
+
+    //Map returns an object of type T.
+    //Map does not have to emit items of the same type as the source Observable.
 
     public Subscription inputBufferingWithMap() {
 
@@ -246,6 +264,52 @@ public class MainActivity extends Activity {
                     }
                 });
 
+    }
+
+
+
+
+    //FlatMap returns an Observable<T>.
+    //that is why FlatMap is recommended if you plan to make an asynchronous call inside the method
+    public Subscription inputBufferingWithFlatMap() {
+
+        return RxView.clickEvents(inputBufferingMap)
+                .map(new Func1<ViewClickEvent, Integer>() {
+                    @Override
+                    public Integer call(ViewClickEvent onClickEvent) {
+                        Timber.d("--------- GOT A TAP");
+                        Timber.d("GOT A TAP");
+                        return 1;
+                    }
+                })
+                .buffer(2, TimeUnit.SECONDS)
+                .flatMap(new Func1<List<Integer>, Observable<Integer>>() {
+                    @Override
+                    public Observable<Integer> call(List<Integer> integers) {
+                        return Observable.just(integers.size());
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Integer>() {
+
+                    @Override
+                    public void onCompleted() {
+                        // fyi: you'll never reach here
+                        Timber.d("----- onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e, "--------- Woops on error!");
+
+                    }
+
+                    @Override
+                    public void onNext(Integer count) {
+                        Timber.d("--------- onNext");
+                        Timber.d(String.format("%d taps", count));
+                    }
+                });
 
     }
 
