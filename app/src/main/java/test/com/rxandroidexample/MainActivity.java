@@ -1,6 +1,7 @@
 package test.com.rxandroidexample;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +52,6 @@ public class MainActivity extends Activity {
 
     @InjectView(R.id.btn_buffering_flat_map)
     protected Button inputBufferingFlatMap;
-
 
 
     @Override
@@ -226,12 +226,12 @@ public class MainActivity extends Activity {
             mBufferingMapSubscription.unsubscribe();
         }
 
-        if (mBufferingFlatMapSubscription != null && !mBufferingFlatMapSubscription.isUnsubscribed()) {
+        if (mBufferingFlatMapSubscription != null && !mBufferingFlatMapSubscription
+        .isUnsubscribed()) {
             mBufferingFlatMapSubscription.unsubscribe();
         }*/
 
     }
-
 
 
     //Map returns an object of type T.
@@ -281,8 +281,6 @@ public class MainActivity extends Activity {
     }
 
 
-
-
     //FlatMap returns an Observable<T>.
     //that is why FlatMap is recommended if you plan to make an asynchronous call inside the method
     public Subscription inputBufferingWithFlatMap() {
@@ -325,6 +323,13 @@ public class MainActivity extends Activity {
                     }
                 });
 
+    }
+
+
+
+    @OnClick(R.id.btn_combine_latest)
+    protected void combineLatest(){
+        startActivity(new Intent(MainActivity.this, LoginActivity.class));
     }
 
 
