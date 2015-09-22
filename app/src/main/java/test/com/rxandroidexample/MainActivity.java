@@ -24,15 +24,23 @@ import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
 
 public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getName();
+
+
+
+    /*
     private Subscription mSubscription = null;
     private Subscription mBufferingSubscription = null;
     private Subscription mBufferingMapSubscription = null;
     private Subscription mBufferingFlatMapSubscription = null;
+    */
+
+    private CompositeSubscription compositeSubscription = null;
 
 
     @InjectView(R.id.btn_buffering)
@@ -42,7 +50,7 @@ public class MainActivity extends Activity {
     protected Button inputBufferingMap;
 
     @InjectView(R.id.btn_buffering_flat_map)
-    protected Button inputBufferingFlatap;
+    protected Button inputBufferingFlatMap;
 
 
 
@@ -53,10 +61,16 @@ public class MainActivity extends Activity {
         Timber.d(TAG + " %s ", "inside onCreate()");
         ButterKnife.inject(this);
 
-        mBufferingSubscription = inputBuffering();
+        compositeSubscription = new CompositeSubscription();
+        compositeSubscription.add(inputBuffering());
+        compositeSubscription.add(inputBufferingWithMap());
+        compositeSubscription.add(inputBufferingWithFlatMap());
+
+
+        /*mBufferingSubscription = inputBuffering();
         mBufferingMapSubscription = inputBufferingWithMap();
         mBufferingFlatMapSubscription = inputBufferingWithFlatMap();
-
+        */
     }
 
 
@@ -169,7 +183,7 @@ public class MainActivity extends Activity {
         observable.subscribeOn(Schedulers.io());
         observable.observeOn(AndroidSchedulers.mainThread());
 
-        mSubscription = observable.subscribe(new Subscriber<Integer>() {
+        compositeSubscription.add(observable.subscribe(new Subscriber<Integer>() {
             @Override
             public void onNext(Integer item) {
 
@@ -187,7 +201,7 @@ public class MainActivity extends Activity {
             public void onCompleted() {
                 Timber.i(TAG + " %s ", "Operation complete.");
             }
-        });
+        }));
 
         // observable.startWith(0);
 
@@ -199,11 +213,11 @@ public class MainActivity extends Activity {
         super.onDestroy();
         ButterKnife.reset(this);
 
-        if (mSubscription != null && !mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
+        if (compositeSubscription != null && !compositeSubscription.isUnsubscribed()) {
+            compositeSubscription.unsubscribe();
         }
 
-        if (mBufferingSubscription != null && !mBufferingSubscription.isUnsubscribed()) {
+        /*if (mBufferingSubscription != null && !mBufferingSubscription.isUnsubscribed()) {
             mBufferingSubscription.unsubscribe();
         }
 
@@ -214,7 +228,7 @@ public class MainActivity extends Activity {
 
         if (mBufferingFlatMapSubscription != null && !mBufferingFlatMapSubscription.isUnsubscribed()) {
             mBufferingFlatMapSubscription.unsubscribe();
-        }
+        }*/
 
     }
 
@@ -273,7 +287,7 @@ public class MainActivity extends Activity {
     //that is why FlatMap is recommended if you plan to make an asynchronous call inside the method
     public Subscription inputBufferingWithFlatMap() {
 
-        return RxView.clickEvents(inputBufferingMap)
+        return RxView.clickEvents(inputBufferingFlatMap)
                 .map(new Func1<ViewClickEvent, Integer>() {
                     @Override
                     public Integer call(ViewClickEvent onClickEvent) {
